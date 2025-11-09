@@ -1,0 +1,14 @@
+<div class="form-box body-registro">
+    <div class="header-text">
+        Crear usuario
+    </div>
+    <form (ngSubmit)="fnRegistro()">
+        <input placeholder="Usuario" type="text" [(ngModel)]="credentials.usuario" name="usuario">
+
+        <input placeholder="Contraseña" type="password" [(ngModel)]="credentials.contrasena" name="contrasena">
+
+        <button mat-raised-button color="primary" type="submit">Ingresar</button>
+        <i routerLink="/auth/login" style="cursor:pointer;">atrás</i>
+    </form>
+
+</div>
