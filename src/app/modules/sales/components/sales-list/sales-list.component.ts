@@ -5,25 +5,26 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { MatPaginator } from '@angular/material/paginator';
 import { FormControl } from '@angular/forms';
-import { UsersService } from '../../services/users.service';
-import { UsersFormComponent } from '../users-form/users-form.component';
+import { SalesService } from '../../services/sales.service';
+import { SalesFormComponent } from '../sales-form/sales-form.component';
 
 @Component({
-  selector: 'app-users-list',
-  templateUrl: './users-list.component.html',
-  styleUrls: ['./users-list.component.scss']
+  selector: 'app-sales-list',
+  templateUrl: './sales-list.component.html',
+  styleUrls: ['./sales-list.component.scss']
 })
-export class UsersListComponent implements OnInit {
+export class SalesListComponent implements OnInit {
 
-appName: string = 'Gestión de Distribuidores';
+appName: string = 'Gestión de Ventas';
   txtFiltro = new FormControl('');
   accionActual!: number;
 
   displayedColumns: string[] = [
-    'nombre',
+    'nombreCliente',
     'producto',
-    'cantidadConsignada',
-    'precioMayorista',
+    'cantidad',
+    'precioUsado',
+    'fecha',
     'acciones'
   ];
 
@@ -33,7 +34,7 @@ appName: string = 'Gestión de Distribuidores';
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
-    private usersService: UsersService,
+    private salesService: SalesService,
     public dialog: MatDialog,
   ) {
     this.dataSource = new MatTableDataSource();
@@ -42,7 +43,7 @@ appName: string = 'Gestión de Distribuidores';
   }
 
   ngOnInit(): void {
-    this.listarDistribuidores();
+    this.listarVentas();
   }
 
   //#region Limpiar Caja de Texto
@@ -67,45 +68,45 @@ appName: string = 'Gestión de Distribuidores';
   }
   //#endregion
 
-  listarDistribuidores() {
-    this.usersService.listarDistribuidores().subscribe({
+  listarVentas() {
+    this.salesService.listarVentas().subscribe({
       next: (res) => {
         this.dataSource.data = res;
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
-        console.log("distribuidores", this.dataSource.data)
+        console.log("ventas", this.dataSource.data)
       },
       error: (err) => {
-        console.error('❌ Error al listar Distribuidores', err);
-        Swal.fire('Error', 'No se pudieron cargar los Distribuidores', 'error');
+        console.error('❌ Error al listar Ventas', err);
+        Swal.fire('Error', 'No se pudieron cargar los Ventas', 'error');
       }
     });
   }
 
   //#region Abrir Modal
-  async fnFormModal(accion: number, nIdDistribuidor: number) {
+  async fnFormModal(accion: number, nIdVenta: number) {
     this.accionActual = accion;
-    const dialogRef = this.dialog.open(UsersFormComponent, {
+    const dialogRef = this.dialog.open(SalesFormComponent, {
       width: '50rem',
       disableClose: true,
       data: {
         accion: accion, //0:Nuevo , 1:Editar
-        nIdDistribuidor: nIdDistribuidor
+        nIdVenta: nIdVenta
       },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
       if (result !== undefined) {
-        this.listarDistribuidores();
+        this.listarVentas();
       }
     });
   }
 
-  async fnEliminarDistribuidor(id: number) {
+  async fnEliminarVenta(id: number) {
     // Confirmar con SweetAlert
     const result = await Swal.fire({
       title: '¿Está seguro?',
-      text: 'Esta acción eliminará el distribuidor de forma permanente.',
+      text: 'Esta acción eliminará la venta de forma permanente.',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#3085d6',
@@ -118,22 +119,22 @@ appName: string = 'Gestión de Distribuidores';
     if (!result.isConfirmed) return;
 
     // Llamar al servicio
-    this.usersService.eliminarDistribuidor(id).subscribe({
+    this.salesService.eliminarVenta(id).subscribe({
       next: () => {
         Swal.fire({
-          title: 'Distribuidor eliminado',
-          text: 'El distribuidor ha sido eliminado correctamente.',
+          title: 'venta eliminada',
+          text: 'La venta ha sido eliminado correctamente.',
           icon: 'success',
           timer: 2500,
           showConfirmButton: false
         });
-        this.listarDistribuidores(); // 🔄 refrescar la lista
+        this.listarVentas(); // 🔄 refrescar la lista
       },
       error: (err) => {
-        console.error('❌ Error al eliminar Distribuidor:', err);
+        console.error('❌ Error al eliminar la venta:', err);
         Swal.fire({
           title: 'Error',
-          text: 'No se pudo eliminar el distribuodor. Intenta nuevamente.',
+          text: 'No se pudo eliminar la venta. Intenta nuevamente.',
           icon: 'error',
           confirmButtonText: 'Aceptar'
         });

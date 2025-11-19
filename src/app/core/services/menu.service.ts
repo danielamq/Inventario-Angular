@@ -35,6 +35,17 @@ export class MenuService {
         show: false,
         subMenu: [],
         level: 1
+      },
+      {
+        idMenu: 3,
+        name: 'Sales',
+        route: 'sales',
+        icon: 'attach_money',
+        idParent: 0,
+        status: true,
+        show: false,
+        subMenu: [],
+        level: 1
       }
     ];
 

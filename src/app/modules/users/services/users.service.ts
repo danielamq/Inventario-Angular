@@ -15,17 +15,17 @@ export class UsersService {
   constructor(private http: HttpClient) { }
   
     //#region Servicio Insertar
-    crearDistribuidor(producto: DistribuidorRequest): Observable<any> {
+    crearDistribuidor(distribuidor: DistribuidorRequest): Observable<any> {
       const urlEndPoint = this.url + 'distribuidores';
       const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
-      return this.http.post(urlEndPoint, producto);
+      return this.http.post(urlEndPoint, distribuidor);
     }
 
-    actualizarDistribuidor(id: number, producto: DistribuidorRequest): Observable<DistribuidorEntity> {
+    actualizarDistribuidor(id: number, distribuidor: DistribuidorRequest): Observable<DistribuidorEntity> {
       const urlEndPoint = `${this.url}distribuidores/${id}`;
       const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
 
-      return this.http.put<DistribuidorEntity>(urlEndPoint, producto);
+      return this.http.put<DistribuidorEntity>(urlEndPoint, distribuidor);
     }
 
     listarDistribuidores(): Observable<any> {
