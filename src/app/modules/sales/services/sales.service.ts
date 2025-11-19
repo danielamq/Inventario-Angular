@@ -14,9 +14,8 @@ export class SalesService {
   constructor(private http: HttpClient) { }
   
     //#region Servicio Insertar
-    crearVenta(venta: VentaRequest): Observable<any> {
+    crearVenta(venta: VentaRequest[]): Observable<any> {
       const urlEndPoint = this.url + 'venta';
-      const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
       return this.http.post(urlEndPoint, venta);
     }
 

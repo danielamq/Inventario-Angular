@@ -1,69 +1,116 @@
-<div>
-    <!--Titulo-->
-    <h1 mat-dialog-title class="clstitulo">{{sAccionModal}} Venta</h1>
-    <!-- Formulario-->
-    <form autocomplete="off" name="Formulario" id="new-form">
-        <!--Formulario: Nombres-->
-        <div class="col-md-12">
-            <mat-form-field style="display:initial">
-                <mat-label>Nombre Cliente</mat-label>
-                <input matInput type="text" maxlength="50" [(ngModel)]="nuevaVenta.nombreCliente" autocomplete="nope"
-                    name="nombre">
-            </mat-form-field>
+<div class="sales-form-container">
+
+  <!-- CONTENIDO SCROLLEABLE -->
+  <div class="scroll-content">
+
+    <!-- TÍTULO -->
+    <h2>{{ sAccionModal }} Venta</h2>
+
+    <!-- CLIENTE -->
+    <div class="row mb-3">
+      <div class="col-md-12">
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Nombre del cliente</mat-label>
+          <input matInput [(ngModel)]="nuevaVenta.nombreCliente" />
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- SECCIÓN PARA AGREGAR PRODUCTOS -->
+    <div class="card p-3 mb-3 shadow-sm">
+      <h4 class="mb-3">Agregar productos</h4>
+
+      <div class="row">
+
+        <!-- Producto -->
+        <div class="col-md-3">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Producto</mat-label>
+            <mat-select [(ngModel)]="nuevaVenta.productoId">
+              <mat-option *ngFor="let p of productos" [value]="p.id">
+                {{ p.nombre }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
 
-        <div class="col-md-12">
-            <mat-form-field style="display:initial">
-                <mat-label>Producto</mat-label>
-                <mat-select [(ngModel)]="nuevaVenta.productoId" name="productoId">
-                    <mat-option *ngFor="let p of productos" [value]="p.id">
-                    {{ p.nombre }}
-                    </mat-option>
-                </mat-select>
-                </mat-form-field>
+        <!-- Cantidad -->
+        <div class="col-md-2">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Cantidad</mat-label>
+            <input matInput type="number" [(ngModel)]="nuevaVenta.cantidad" />
+          </mat-form-field>
         </div>
 
-        <div class="col-md-12">
-            <mat-form-field style="display:initial">
-                <mat-label>Distribuidor</mat-label>
-                <mat-select [(ngModel)]="nuevaVenta.distribuidorId" name="distribuidorId" (selectionChange)="onDistribuidorChange($event.value)">
-                    <mat-option *ngFor="let d of distribuidores" [value]="d.id">
-                    {{ d.nombre }}
-                    </mat-option>
-                </mat-select>
-                </mat-form-field>
+        <!-- Descuento -->
+        <div class="col-md-2">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Descuento adicional</mat-label>
+            <input matInput type="number" [(ngModel)]="nuevaVenta.descuentoAdicional" />
+          </mat-form-field>
         </div>
 
-        <div class="col-md-12">
-            <mat-form-field style="display:initial">
-                <mat-label>Cantidad</mat-label>
-                <input matInput type="number" [(ngModel)]="nuevaVenta.cantidad" autocomplete="nope" name="cantidad">
-            </mat-form-field>
+        <!-- Distribuidor -->
+        <div class="col-md-3" *ngIf="distribuidorFijo === null">
+        <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Distribuidor (Opcional)</mat-label>
+            <mat-select [(ngModel)]="nuevaVenta.distribuidorId">
+            <mat-option [value]="null">Sin distribuidor</mat-option>
+            <mat-option *ngFor="let d of distribuidores" [value]="d.id">
+                {{ d.nombre }}
+            </mat-option>
+            </mat-select>
+        </mat-form-field>
         </div>
 
-                <div class="col-md-12">
-            <mat-form-field style="display:initial">
-                <mat-label>Descuento adicional</mat-label>
-                <input matInput type="number" [(ngModel)]="nuevaVenta.descuentoAdicional" autocomplete="nope" name="descuentoAdicional">
-            </mat-form-field>
+        <!-- Botón agregar -->
+        <div class="col-md-2 d-flex align-items-center">
+          <button mat-raised-button color="primary" class="w-100" (click)="agregarProducto()">
+            Agregar
+          </button>
         </div>
 
-        <!--Botones-->
+      </div>
+    </div>
 
-        <div class="row" style="padding-top: 1rem;">
-            <!--Botones: Grabar-->
-            <div class="col-md-6">
-                <button type="button" color="primary" style="width: 100%;" mat-raised-button
-                    (click)="guardarVenta()">Grabar</button>
-            </div>
+    <!-- LISTA DE PRODUCTOS AGREGADOS -->
+    <div class="card p-3 shadow-sm" *ngIf="listaProductosVenta.length > 0">
+      <h4 class="mb-3">Productos agregados</h4>
 
-            <!--Botones: Cancelar-->
-            <div class="col-md-6">
-                <button type="button" color="warn" style="width: 100%;" mat-raised-button
-                    (click)="fnCerrarModal(0)">Cancelar</button>
-            </div>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Distribuidor</th>
+            <th>Mayorista</th>
+            <th>Descuento</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of listaProductosVenta; let i = index">
+            <td>{{ getNombreProducto(item.productoId) }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>{{ getNombreDistribuidor(item.distribuidorId) }}</td>
+            <td>{{ item.esMayorista ? 'Sí' : 'No' }}</td>
+            <td>{{ item.descuentoAdicional ?? 0 }}</td>
+            <td class="text-end">
+              <button mat-icon-button color="warn" (click)="eliminarProducto(i)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-        </div>
-    </form>
+  </div>
+
+  <!-- BOTONES FIJOS -->
+  <div class="footer-buttons">
+    <button mat-button (click)="fnCerrarModal(0)">Cancelar</button>
+    <button mat-raised-button color="accent" (click)="guardarVenta()">Guardar</button>
+  </div>
 
 </div>
