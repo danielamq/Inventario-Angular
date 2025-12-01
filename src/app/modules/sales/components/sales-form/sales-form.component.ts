@@ -8,8 +8,10 @@ import { UsersService } from "src/app/modules/users/services/users.service";
 
 import Swal from "sweetalert2";
 import { SalesService } from "../../services/sales.service";
+import { ItemVentaFront } from "../../interfaces/VentaRequest.interface";
 import { ProductoEntity } from "src/app/modules/inventory/interfaces/ProductoEntity.interface";
 import { DistribuidorEntity } from "src/app/modules/users/interfaces/DistribuidorEntity.interface";
+import { VentaEntity, VentaItemEntity } from "../../interfaces/VentaEntity.interface";
 
 @Component({
   selector: 'app-sales-form',
@@ -22,11 +24,16 @@ import { DistribuidorEntity } from "src/app/modules/users/interfaces/Distribuido
 })
 export class SalesFormComponent implements OnInit {
 
-  nuevaVenta: VentaRequest = new VentaRequest();
+  nuevaVenta: VentaRequest = {};
   productos: ProductoEntity[] = [];
   distribuidores: DistribuidorEntity[] = [];
-  listaProductosVenta: VentaRequest[] = [];
+  listaProductosVenta: ItemVentaFront[] = [];
   distribuidorFijo: number | null = null;
+
+  selectedProductoId?: number;
+  selectedCantidad?: number;
+  selectedDescuento?: number;
+  selectedDistribuidorId?: number;
 
   sAccionModal: string = "";
 
@@ -51,13 +58,32 @@ export class SalesFormComponent implements OnInit {
 
   cargarVentaExistente() {
     this.salesService.obtenerVentaPorId(this.data.nIdVenta).subscribe({
-      next: (res) => {
-        this.nuevaVenta = res;
-        if (res.producto && res.producto.id) {
-          this.nuevaVenta.productoId = res.producto.id;
-        }
+      next: (res: VentaEntity) => {
+        // Datos principales de la venta
+        this.nuevaVenta.nombreCliente = res.nombreCliente;
+        this.nuevaVenta.esMayorista = res.esMayorista;
+        this.nuevaVenta.distribuidorId = res.distribuidor?.id;
+        this.nuevaVenta.descuentoAdicional = res.descuentoAdicional ?? 0;
+
+        // Fijar distribuidor si es mayorista
+        this.distribuidorFijo = res.distribuidor?.id ?? null;
+
+        // Mapear productos de la venta
+        this.listaProductosVenta = (res.items ?? []).map((item: VentaItemEntity) => ({
+          productoId: Number(item.producto.id),
+          cantidad: Number(item.cantidad),
+          esMayorista: res.esMayorista,
+          distribuidorId: res.distribuidor?.id,
+          descuentoAdicional: this.nuevaVenta.descuentoAdicional,
+          precioUnitario: item.precioUnitario,
+          subtotal: item.subtotal,
+        }));
+
+        // Forzar a Angular a detectar cambios
+        this.listaProductosVenta = [...this.listaProductosVenta];
       },
-      error: () => Swal.fire("Error", "No se pudo cargar la venta", "error")
+      error: () =>
+        Swal.fire("Error", "No se pudo cargar la venta", "error")
     });
   }
 
@@ -76,59 +102,73 @@ export class SalesFormComponent implements OnInit {
   }
 
   agregarProducto() {
-    if (!this.nuevaVenta.productoId || !this.nuevaVenta.cantidad) {
+    if (!this.selectedProductoId || !this.selectedCantidad) {
       Swal.fire("Error", "Debe seleccionar producto y cantidad", "warning");
       return;
     }
 
-    // Si aún NO existe distribuidor fijo y este producto trae uno → fijarlo
-    if (this.distribuidorFijo == null && this.nuevaVenta.distribuidorId) {
+     if (this.distribuidorFijo == null && this.nuevaVenta.distribuidorId) {
       this.distribuidorFijo = this.nuevaVenta.distribuidorId;
     }
 
-    // Si YA existe distribuidor fijo → asignarlo automáticamente al nuevo producto
+    // Fijar distribuidor en el primer producto
+     // Si YA existe distribuidor fijo → asignarlo automáticamente al nuevo producto
     if (this.distribuidorFijo != null) {
       this.nuevaVenta.distribuidorId = this.distribuidorFijo;
     }
-
     this.nuevaVenta.esMayorista = !!this.nuevaVenta.distribuidorId;
-    // Agregar el producto a la lista
+
+        const producto = this.productos.find(p => p.id === this.selectedProductoId);
+    if (!producto) return;
+
+  // 1️⃣ Precio base
+  let precioUnitario = producto.precioDetal;
+
+  // 2️⃣ Precio mayorista
+  if (this.nuevaVenta.esMayorista) {
+    precioUnitario = producto.precioMayorista;
+  }
+
+  // 3️⃣ Precio especial del distribuidor si aplica
+  if (this.nuevaVenta.distribuidorId) {
+    const distribuidor = this.distribuidores.find(d => d.id === this.nuevaVenta.distribuidorId);
+    const precioEspecial = distribuidor?.preciosEspeciales?.find(pp => pp.producto.id === producto.id)?.precioEspecial;
+    if (precioEspecial != null) {
+      precioUnitario = precioEspecial;
+    }
+  }
+
+    const descuento = this.nuevaVenta.descuentoAdicional ?? 0;
+    const subtotal = (precioUnitario - descuento) * this.selectedCantidad;
     this.listaProductosVenta.push({
-      productoId: this.nuevaVenta.productoId,
-      cantidad: this.nuevaVenta.cantidad,
+      productoId: this.selectedProductoId,
+      cantidad: this.selectedCantidad,
+      precioUnitario,
+      subtotal,
       descuentoAdicional: this.nuevaVenta.descuentoAdicional,
       distribuidorId: this.nuevaVenta.distribuidorId,
       esMayorista: this.nuevaVenta.esMayorista
     });
 
-    // 4️⃣ Limpiar los campos del producto
-    this.nuevaVenta.productoId = undefined;
-    this.nuevaVenta.cantidad = undefined;
-    this.nuevaVenta.descuentoAdicional = undefined;
+    this.selectedProductoId = undefined;
+    this.selectedCantidad = undefined;
+    this.selectedDescuento = undefined;
 
-    // 👉 Si hay distribuidor fijo, mantenerlo visible internamente
     this.nuevaVenta.distribuidorId = this.distribuidorFijo ?? undefined;
   }
 
-  eliminarProducto(index: number) {
-    this.listaProductosVenta.splice(index, 1);
+  getTotalVenta(): number {
+    return this.listaProductosVenta.reduce((total, item) => {
+      const subtotal = item.subtotal ?? ((item.precioUnitario ?? 0) * item.cantidad);
+      const descuento = item.descuentoAdicional ?? 0;
+      return total + (subtotal - descuento);
+    }, 0);
   }
 
-  async guardarVenta() {
+  guardarVenta() {
     if (!this.nuevaVenta.nombreCliente) {
       Swal.fire("Error", "Debe ingresar el nombre del cliente", "warning");
       return;
-    }
-
-    // Si solo llenó un producto sin presionar "Agregar"
-    if (this.listaProductosVenta.length === 0 && this.nuevaVenta.productoId) {
-      this.listaProductosVenta.push({
-        productoId: this.nuevaVenta.productoId,
-        cantidad: this.nuevaVenta.cantidad,
-        descuentoAdicional: this.nuevaVenta.descuentoAdicional,
-        distribuidorId: this.nuevaVenta.distribuidorId,
-        esMayorista: this.nuevaVenta.esMayorista
-      });
     }
 
     if (this.listaProductosVenta.length === 0) {
@@ -136,24 +176,29 @@ export class SalesFormComponent implements OnInit {
       return;
     }
 
-    const payload = this.listaProductosVenta.map(item => ({
-      nombreCliente: this.nuevaVenta.nombreCliente,
-      productoId: item.productoId,
-      cantidad: item.cantidad,
-      descuentoAdicional: item.descuentoAdicional,
-      distribuidorId: item.distribuidorId,
-      esMayorista: item.esMayorista
-    }));
-
-    console.log("📤 Enviando:", payload);
+    const payload: VentaRequest = {
+      nombreCliente: this.nuevaVenta.nombreCliente!,
+      esMayorista: this.listaProductosVenta[0].esMayorista ?? false,
+      descuentoAdicional: this.listaProductosVenta[0].descuentoAdicional,
+      distribuidorId: this.listaProductosVenta[0].distribuidorId,
+      productos: this.listaProductosVenta.map(item => ({
+        productoId: item.productoId,
+        cantidad: item.cantidad
+      }))
+    };
 
     this.salesService.crearVenta(payload).subscribe({
       next: () => {
         Swal.fire("Éxito", "Venta registrada correctamente", "success");
         this.fnCerrarModal(1);
       },
-      error: () => Swal.fire("Error", "No se pudo guardar la venta", "error")
+      error: () =>
+        Swal.fire("Error", "No se pudo guardar la venta", "error")
     });
+  }
+
+  eliminarProducto(index: number) {
+    this.listaProductosVenta.splice(index, 1);
   }
 
   fnCerrarModal(result: any) {

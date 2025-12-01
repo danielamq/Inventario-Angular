@@ -7,6 +7,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { FormControl } from '@angular/forms';
 import { SalesService } from '../../services/sales.service';
 import { SalesFormComponent } from '../sales-form/sales-form.component';
+import { InventoryService } from 'src/app/modules/inventory/services/inventory.service';
 
 @Component({
   selector: 'app-sales-list',
@@ -19,14 +20,15 @@ appName: string = 'Gestión de Ventas';
   txtFiltro = new FormControl('');
   accionActual!: number;
 
-  displayedColumns: string[] = [
+  displayedColumns = [
     'nombreCliente',
-    'producto',
-    'cantidad',
-    'precioUsado',
+    'nombreDistribuidor',
+    'productos',
+    'total',
     'fecha',
     'acciones'
   ];
+  productosCatalogo: any[] = [];
 
   dataSource = new MatTableDataSource<any>();
 
@@ -35,6 +37,7 @@ appName: string = 'Gestión de Ventas';
 
   constructor(
     private salesService: SalesService,
+    private inventoryService: InventoryService,
     public dialog: MatDialog,
   ) {
     this.dataSource = new MatTableDataSource();
@@ -44,16 +47,14 @@ appName: string = 'Gestión de Ventas';
 
   ngOnInit(): void {
     this.listarVentas();
+    this.cargarProductos();
   }
 
-  //#region Limpiar Caja de Texto
   async fnClearFilter() {
     if (this.dataSource) {
       this.dataSource.filter = '';
     }
   }
-  //#endregion
-
 
   //#region Filtrado de Tabla
   applyFilter(event: Event) {
@@ -66,7 +67,6 @@ appName: string = 'Gestión de Ventas';
       this.dataSource.paginator.firstPage();
     }
   }
-  //#endregion
 
   listarVentas() {
     this.salesService.listarVentas().subscribe({
@@ -74,13 +74,27 @@ appName: string = 'Gestión de Ventas';
         this.dataSource.data = res;
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
-        console.log("ventas", this.dataSource.data)
+        console.log("ventas recibidas", res);
       },
       error: (err) => {
         console.error('❌ Error al listar Ventas', err);
         Swal.fire('Error', 'No se pudieron cargar los Ventas', 'error');
       }
     });
+  }
+
+  cargarProductos() {
+    this.inventoryService.listarProductos().subscribe({
+      next: (res) => {
+        this.productosCatalogo = res;
+      },
+      error: () => console.error("Error al cargar productos")
+    });
+  }
+
+  getNombreProducto(id: number): string {
+    const p = this.productosCatalogo.find(prod => prod.id === id);
+    return p ? p.nombre : 'Producto desconocido';
   }
 
   //#region Abrir Modal

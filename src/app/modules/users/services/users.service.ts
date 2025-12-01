@@ -15,31 +15,23 @@ export class UsersService {
   constructor(private http: HttpClient) { }
   
     //#region Servicio Insertar
-    crearDistribuidor(distribuidor: DistribuidorRequest): Observable<any> {
-      const urlEndPoint = this.url + 'distribuidores';
-      const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
-      return this.http.post(urlEndPoint, distribuidor);
-    }
+  crearDistribuidor(distribuidor: DistribuidorRequest): Observable<DistribuidorEntity> {
+    return this.http.post<DistribuidorEntity>(`${this.url}distribuidores`, distribuidor);
+  }
 
-    actualizarDistribuidor(id: number, distribuidor: DistribuidorRequest): Observable<DistribuidorEntity> {
-      const urlEndPoint = `${this.url}distribuidores/${id}`;
-      const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
+  actualizarDistribuidor(id: number, distribuidor: DistribuidorRequest): Observable<DistribuidorEntity> {
+    return this.http.put<DistribuidorEntity>(`${this.url}distribuidores/${id}`, distribuidor);
+  }
 
-      return this.http.put<DistribuidorEntity>(urlEndPoint, distribuidor);
-    }
+  listarDistribuidores(): Observable<DistribuidorEntity[]> {
+    return this.http.get<DistribuidorEntity[]>(`${this.url}distribuidores`);
+  }
 
-    listarDistribuidores(): Observable<any> {
-      const urlEndPoint = this.url + 'distribuidores';
-      return this.http.get(urlEndPoint);
-    }
-        
-    obtenerDistribuidorPorId(id: number): Observable<any> {
-      const urlEndPoint = `${this.url}distribuidores/${id}`;
-      return this.http.get(urlEndPoint);
-    }
+  obtenerDistribuidorPorId(id: number): Observable<DistribuidorEntity> {
+    return this.http.get<DistribuidorEntity>(`${this.url}distribuidores/${id}`);
+  }
 
-    eliminarDistribuidor(id: number): Observable<any> {
-      const urlEndPoint = `${this.url}distribuidores/${id}`;
-      return this.http.delete(urlEndPoint);
-    }
+  eliminarDistribuidor(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.url}distribuidores/${id}`);
+  }
 }
