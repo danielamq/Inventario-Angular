@@ -1,12 +1,21 @@
 import { ProductoEntity } from "../../inventory/interfaces/ProductoEntity.interface";
 import { DistribuidorEntity } from "../../users/interfaces/DistribuidorEntity.interface";
 
-export class VentaEntity {
-    producto?: ProductoEntity;
-    cantidad?: number;
-    nombreCliente?: string;
-    esMayorista?: boolean
-    precioUsado?: number
-    fecha?: Date
-    distribuidor?: DistribuidorEntity
+export interface VentaEntity {
+  id: number;
+  nombreCliente: string;
+  esMayorista: boolean;
+  descuentoAdicional?: number;
+  total?: number;
+  fecha?: Date;
+  distribuidor?: DistribuidorEntity;
+  items: VentaItemEntity[];
+}
+
+export interface VentaItemEntity {
+  id: number;
+  producto: ProductoEntity;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
 }

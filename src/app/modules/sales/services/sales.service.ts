@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { environment } from "src/environments/environment";
 import { Observable } from 'rxjs';
 import { VentaRequest } from '../interfaces/VentaRequest.interface';
+import { VentaEntity } from '../interfaces/VentaEntity.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -15,9 +16,7 @@ export class SalesService {
   
     //#region Servicio Insertar
     crearVenta(venta: VentaRequest): Observable<any> {
-      const urlEndPoint = this.url + 'venta';
-      const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
-      return this.http.post(urlEndPoint, venta);
+      return this.http.post(this.url + 'venta', venta);
     }
 
     listarVentas(): Observable<any> {

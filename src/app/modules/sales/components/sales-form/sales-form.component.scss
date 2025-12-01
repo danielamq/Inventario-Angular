@@ -20,3 +20,29 @@
 .selectMat {
     display: initial;
 }
+
+.sales-form-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Contenido que se va a scrollear */
+.scroll-content {
+  overflow-y: auto;
+  padding-right: 10px; /* evita que tape el scrollbar */
+  max-height: calc(100vh - 80px); /* deja espacio para botones */
+}
+
+/* Botones siempre visibles */
+.footer-buttons {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 12px 0;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  z-index: 10;
+}

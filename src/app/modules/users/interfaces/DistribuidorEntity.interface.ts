@@ -1,14 +1,20 @@
-export class DistribuidorEntity {
-    id: number;
-    nombre: string;
-    cantidadConsignada: number;
-    precioAsignado: number;
-  
-    constructor() {
-        this.id = 0;
-        this.nombre = '';
-        this.cantidadConsignada = 0;
-        this.precioAsignado = 0;
-    }
+import { ProductoEntity } from "../../inventory/interfaces/ProductoEntity.interface";
+export interface DistribuidorEntity {
+  id: number;
+  nombre: string;
+  productos: DistribuidorProductoEntity[];
+  preciosEspeciales: DistribuidorPrecioEntity [];
+}
 
+export interface DistribuidorProductoEntity  {
+  id: number;
+  producto: ProductoEntity;
+  cantidadConsignada: number;
+  precioAsignado: number;
+}
+
+export interface DistribuidorPrecioEntity  {
+  id: number;
+  producto: ProductoEntity;
+  precioEspecial: number;
 }

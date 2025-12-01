@@ -20,8 +20,22 @@ import { ProductoEntity } from "src/app/modules/inventory/interfaces/ProductoEnt
 })
 export class UsersFormComponent implements OnInit {
 
-  nuevoDistribuidor: DistribuidorRequest = new DistribuidorRequest;
+  productoSeleccionadoId: number | null = null;
+  cantidadConsignada: number | null = null;
+  productoPrecioId: number | null = null;
+  precioEspecial: number | null = null;
+
   productos: ProductoEntity[] = [];
+
+  // Formulario principal
+  nuevoDistribuidor: DistribuidorRequest = {
+    nombre: '',
+    productos: [],
+    preciosEspeciales: [],
+    productosAEliminar: [] as number[]
+  };
+  
+  
 
   sAccionModal: string = "";
 
@@ -31,99 +45,170 @@ export class UsersFormComponent implements OnInit {
     private usersService: UsersService,
     private inventoryService: InventoryService,
   ) {
-
-
-    this.sAccionModal = this.data.accion == 0 ? "Agregar" : "Editar";
-    console.log(this.sAccionModal)
+    this.sAccionModal = this.data.accion === 0 ? "Agregar" : "Editar";
   }
 
   ngOnInit(): void {
-    // 1. Cargar productos primero
     this.cargarProductos();
 
-    // 2. Si es edición, cargar los datos del distribuidor
     if (this.data.accion === 1) {
-      this.usersService.obtenerDistribuidorPorId(this.data.nIdDistribuidor).subscribe({
-        next: (res) => {
-          this.nuevoDistribuidor = res;
-
-          // ⚡ Asegurar que el productoId se asigne correctamente
-          if (res.producto && res.producto.id) {
-            this.nuevoDistribuidor.productoId = res.producto.id;
-          }
-        },
-        error: (err) => {
-          console.error('❌ Error al cargar distribuidor:', err);
-          Swal.fire('Error', 'No se pudieron cargar los datos del distribuidor', 'error');
-        }
-      });
+      this.cargarDistribuidor(this.data.nIdDistribuidor);
     }
   }
 
   cargarProductos() {
     this.inventoryService.listarProductos().subscribe({
-      next: (res: ProductoEntity[]) => {
-        this.productos = res;
-        console.log('✅ Productos cargados:', this.productos);
-      },
-      error: (err) => console.error('❌ Error cargando productos:', err)
+      next: (res) => (this.productos = res),
+      error: () =>
+        Swal.fire('Error', 'No se pudieron cargar los productos', 'error'),
     });
   }
 
-  async guardarDistribuidor() {
-    // Validaciones básicas
-    if (!this.nuevoDistribuidor.nombre || !this.nuevoDistribuidor.productoId) {
-      Swal.fire('Error', 'Debes completar nombre y seleccionar un producto', 'warning');
+  // CARGAR DISTRIBUIDOR PARA EDICIÓN
+  cargarDistribuidor(id: number) {
+    this.usersService.obtenerDistribuidorPorId(id).subscribe({
+      next: (res) => {
+        this.nuevoDistribuidor = {
+          nombre: res.nombre,
+          productos: res.productos.map((p: any) => ({
+            id: p.id,
+            productoId: p.producto.id,
+            cantidadConsignada: p.cantidadConsignada,
+            cantidadTotal: p.cantidadConsignada,
+            cantidadIngresada: 0
+          })),
+          preciosEspeciales: res.preciosEspeciales?.map((pe: any) => ({
+            productoId: pe.producto.id,
+            precioEspecial: pe.precioEspecial,
+          })) || []
+        };
+      },
+      error: () => {
+        Swal.fire('Error', 'No se pudo cargar el distribuidor', 'error');
+      },
+    });
+  }
+
+  // AGREGAR PRODUCTO CONSIGNADO
+  agregarProducto() {
+    if (!this.productoSeleccionadoId || !this.cantidadConsignada) {
+      Swal.fire('Advertencia', 'Debe seleccionar producto y cantidad', 'warning');
       return;
     }
 
-    // Si es creación
+    this.nuevoDistribuidor.productos.push({
+      productoId: this.productoSeleccionadoId,
+      cantidadConsignada: this.cantidadConsignada
+    });
+
+    this.productoSeleccionadoId = null;
+    this.cantidadConsignada = null;
+  }
+
+  eliminarProducto(i: number) {
+    const producto = this.nuevoDistribuidor.productos[i];
+
+    if (producto.productoId) { 
+      if (!this.nuevoDistribuidor.productosAEliminar) {
+        this.nuevoDistribuidor.productosAEliminar = [];
+      }
+      this.nuevoDistribuidor.productosAEliminar.push(producto.productoId);
+      console.log(producto)
+      
+  console.log('productosAEliminar', this.nuevoDistribuidor.productosAEliminar);
+    }
+    this.nuevoDistribuidor.productos.splice(i, 1);
+  }
+
+  actualizarCantidadProducto(index: number) {
+    const item = this.nuevoDistribuidor.productos[index];
+    const cantidad = 0;
+
+
+    // Llamada al backend para actualizar stock
+    this.inventoryService.actualizarStock(item.productoId, cantidad)
+      .subscribe({
+        next: () => {
+          Swal.fire({
+            title: "Stock actualizado con éxito",
+            icon: 'success',
+            timer: 2500,
+            showConfirmButton: false,
+          });
+        },
+        error: (err) => {
+          console.error('Error al actualizar stock', err);
+          alert('No se pudo actualizar la cantidad. Intente nuevamente.');
+        }
+      });
+  }
+
+
+  // AGREGAR PRECIO ESPECIAL
+  agregarPrecioEspecial() {
+    if (!this.productoPrecioId || !this.precioEspecial) {
+      Swal.fire('Advertencia', 'Debe seleccionar producto y precio', 'warning');
+      return;
+    }
+
+    this.nuevoDistribuidor.preciosEspeciales!.push({
+      productoId: this.productoPrecioId,
+      precioEspecial: this.precioEspecial
+    });
+
+    this.productoPrecioId = null;
+    this.precioEspecial = null;
+  }
+
+  eliminarPrecio(i: number) {
+    this.nuevoDistribuidor.preciosEspeciales!.splice(i, 1);
+  }
+
+  // GUARDAR / EDITAR DISTRIBUIDOR
+  guardarDistribuidor() {
+    if (!this.nuevoDistribuidor.nombre.trim()) {
+      Swal.fire('Error', 'Debes ingresar el nombre del distribuidor', 'warning');
+      return;
+    }
+
+    if (this.nuevoDistribuidor.productos.length === 0) {
+      Swal.fire('Error', 'Debes agregar al menos un producto consignado', 'warning');
+      return;
+    }
+
     if (this.data.accion === 0) {
+      // Crear
       this.usersService.crearDistribuidor(this.nuevoDistribuidor).subscribe({
         next: () => {
-          Swal.fire({
-            title: 'Distribuidor creado con éxito',
-            text: 'El distribuidor se ha registrado correctamente.',
-            icon: 'success',
-            timer: 2500,
-            showConfirmButton: false
-          });
+          Swal.fire('Distribuidor creado con éxito', '', 'success');
           this.fnCerrarModal(1);
         },
-        error: (err) => {
-          console.error('❌ Error al crear distribuidor:', err);
-          Swal.fire('Error', 'No se pudo crear el distribuidor. Intenta nuevamente.', 'error');
-          console.log("datso enviados", this.nuevoDistribuidor)
-        }
+        error: () => Swal.fire('Error', 'No se pudo crear el distribuidor', 'error')
       });
 
-    } else if (this.data.accion === 1) {
-      // Si es edición
-      this.usersService.actualizarDistribuidor(this.data.nIdDistribuidor, this.nuevoDistribuidor).subscribe({
+    } else {
+      this.usersService.actualizarDistribuidor(
+        this.data.nIdDistribuidor,
+        this.nuevoDistribuidor
+      ).subscribe({
         next: () => {
-          Swal.fire({
-            title: 'Distribuidor actualizado con éxito',
-            text: 'El distribuidor se ha modificado correctamente.',
-            icon: 'success',
-            timer: 2500,
-            showConfirmButton: false
-          });
+          const actualizaciones: any[] = [];
+          Swal.fire('Distribuidor actualizado con éxito', '', 'success');
           this.fnCerrarModal(1);
         },
-        error: (err) => {
-          console.error('❌ Error al actualizar distribuidor:', err);
-          Swal.fire('Error', 'No se pudo actualizar el distribuidor. Intenta nuevamente.', 'error');
-        }
+        error: () => Swal.fire('Error', 'No se pudo actualizar el distribuidor', 'error')
       });
     }
   }
+  
 
-    fnCerrarModal(result: any) {
-      if (result === 1) {
-        this.dialogRef.close(result); // devuelve resultado al padre
-      } else {
-        this.dialogRef.close(); // cierra sin recargar
-      }
-    }
-
+  getNombreProducto(id: number): string {
+    const prod = this.productos.find(p => p.id === id);
+    return prod ? prod.nombre : '—';
   }
+
+  fnCerrarModal(result?: any) {
+    this.dialogRef.close(result ?? 0);
+  }
+
+}

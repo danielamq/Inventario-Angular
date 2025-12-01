@@ -7,7 +7,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { FormControl } from '@angular/forms';
 import { UsersService } from '../../services/users.service';
 import { UsersFormComponent } from '../users-form/users-form.component';
-
+import { DistribuidorEntity } from '../../interfaces/DistribuidorEntity.interface';
 @Component({
   selector: 'app-users-list',
   templateUrl: './users-list.component.html',
@@ -21,9 +21,8 @@ appName: string = 'Gestión de Distribuidores';
 
   displayedColumns: string[] = [
     'nombre',
-    'producto',
-    'cantidadConsignada',
-    'precioMayorista',
+    'productos',
+    'preciosEspeciales',
     'acciones'
   ];
 
@@ -80,6 +79,20 @@ appName: string = 'Gestión de Distribuidores';
         Swal.fire('Error', 'No se pudieron cargar los Distribuidores', 'error');
       }
     });
+  }
+
+    getProductosString(dist: DistribuidorEntity): string {
+    if (!dist.productos) return '—';
+    return dist.productos
+      .map(p => `${p.producto.nombre} (${p.cantidadConsignada})`)
+      .join(', ');
+  }
+
+  getPreciosEspecialesString(dist: DistribuidorEntity): string {
+    if (!dist.preciosEspeciales) return '—';
+    return dist.preciosEspeciales
+      .map(p => `${p.producto.nombre}: $${p.precioEspecial}`)
+      .join(', ');
   }
 
   //#region Abrir Modal

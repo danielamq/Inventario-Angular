@@ -27,7 +27,6 @@ export class InventoryService {
       return this.http.put<ProductoEntity>(urlEndPoint, producto);
     }
 
-
     actualizarStock(id: number, cantidadActualizar: number): Observable<number> {
         const urlEndPoint = `${this.url}productos/${id}/stock`;
         const httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
