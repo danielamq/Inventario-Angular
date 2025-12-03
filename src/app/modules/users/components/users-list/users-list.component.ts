@@ -22,6 +22,7 @@ appName: string = 'Gestión de Distribuidores';
   displayedColumns: string[] = [
     'nombre',
     'productos',
+    'cantidad',
     'preciosEspeciales',
     'acciones'
   ];

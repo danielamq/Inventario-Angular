@@ -63,7 +63,16 @@
           <td mat-cell *matCellDef="let element">
             <div *ngFor="let item of element.items" style="font-size: 13px; margin-bottom: 4px;">
               • {{ item.producto?.nombre }} 
-              <strong>x{{ item.cantidad }}</strong>
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="cantidad">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cantidad</th>
+
+          <td mat-cell *matCellDef="let element">
+            <div *ngFor="let item of element.items" style="font-size: 13px; margin-bottom: 4px;">
+              {{ item.cantidad }}
             </div>
           </td>
         </ng-container>

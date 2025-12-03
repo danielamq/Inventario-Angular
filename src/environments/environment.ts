@@ -1,5 +1,5 @@
 
 export const environment = {
   production: false,
-  ApiURL: "http://localhost:8080/",
+  ApiURL: "inventario-java-production.up.railway.app",
 };

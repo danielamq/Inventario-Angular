@@ -24,6 +24,7 @@ appName: string = 'Gestión de Ventas';
     'nombreCliente',
     'nombreDistribuidor',
     'productos',
+    'cantidad',
     'total',
     'fecha',
     'acciones'
