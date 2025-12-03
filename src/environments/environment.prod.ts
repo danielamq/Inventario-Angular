@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  ApiURL: "https://api-inventory.azurewebsites.net/",
+  ApiURL: "inventario-java-production.up.railway.app",
 };
