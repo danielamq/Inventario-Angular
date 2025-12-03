@@ -1,13 +1,13 @@
 {
   "name": "inventory",
   "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
-  },
+"scripts": {
+  "ng": "ng",
+  "start": "node server.js",
+  "build": "ng build --configuration production",
+  "watch": "ng build --watch --configuration development",
+  "test": "ng test"
+},
   "private": true,
   "dependencies": {
     "@angular/animations": "~13.3.0",
@@ -24,6 +24,7 @@
     "@ng-bootstrap/ng-bootstrap": "^12.1.2",
     "@popperjs/core": "^2.10.2",
     "bootstrap": "^5.1.3",
+    "express": "^5.2.1",
     "rxjs": "~7.5.0",
     "sweetalert2": "^11.5.2",
     "tslib": "^2.3.0",
