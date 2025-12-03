@@ -57,7 +57,6 @@ appName: string = 'Gestión de Ventas';
     }
   }
 
-  //#region Filtrado de Tabla
   applyFilter(event: Event) {
     //Leer el filtro
     const filterValue = (event.target as HTMLInputElement).value;
